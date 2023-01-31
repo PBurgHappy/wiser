@@ -39,6 +39,7 @@ namespace Api.Modules.Modules.Services
         private readonly IJsonService jsonService;
         private readonly IGridsService gridsService;
         private readonly IExcelService excelService;
+        private readonly ICsvService csvService;
         private readonly IObjectsService objectsService;
         private readonly IUsersService usersService;
         private readonly IStringReplacementsService stringReplacementsService;
@@ -55,13 +56,14 @@ namespace Api.Modules.Modules.Services
             IDatabaseConnection clientDatabaseConnection, IWiserItemsService wiserItemsService,
             IJsonService jsonService, IExcelService excelService, IObjectsService objectsService,
             IUsersService usersService, IStringReplacementsService stringReplacementsService,
-            ILogger<ModulesService> logger, IDatabaseHelpersService databaseHelpersService)
+            ILogger<ModulesService> logger, IDatabaseHelpersService databaseHelpersService,ICsvService csvService)
         {
             this.wiserCustomersService = wiserCustomersService;
             this.gridsService = gridsService;
             this.wiserItemsService = wiserItemsService;
             this.jsonService = jsonService;
             this.excelService = excelService;
+            this.csvService = csvService;
             this.objectsService = objectsService;
             this.usersService = usersService;
             this.stringReplacementsService = stringReplacementsService;
@@ -655,6 +657,42 @@ UNION
             }
 
             var result = excelService.JsonArrayToExcel(newData);
+            return new ServiceResult<byte[]>(result);
+        }
+        
+        /// <inheritdoc />
+        public async Task<ServiceResult<byte[]>> ExportCsvAsync(int id, ClaimsIdentity identity)
+        {
+            var gridResult = await gridsService.GetOverviewGridDataAsync(id, new GridReadOptionsModel(), identity, true);
+            if (gridResult.StatusCode != HttpStatusCode.OK)
+            {
+                return new ServiceResult<byte[]>
+                {
+                    ErrorMessage = gridResult.ErrorMessage,
+                    StatusCode = gridResult.StatusCode
+                };
+            }
+
+            var newData = new JArray();
+            var data = gridResult.ModelObject.Data;
+            var columns = gridResult.ModelObject.Columns;
+            foreach (var item in data)
+            {
+                var newObject = new JObject();
+                foreach (var column in columns)
+                {
+                    if (String.IsNullOrWhiteSpace(column.Field))
+                    {
+                        continue;
+                    }
+
+                    newObject.Add(new JProperty(column.Title, item[column.Field.ToLowerInvariant()]));
+                }
+
+                newData.Add(newObject);
+            }
+
+            var result = csvService.JsonArrayToCsv(newData);
             return new ServiceResult<byte[]>(result);
         }
 

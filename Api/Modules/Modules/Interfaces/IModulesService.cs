@@ -57,6 +57,14 @@ namespace Api.Modules.Modules.Interfaces
         /// <param name="identity">The identity of the authenticated user.</param>
         /// <returns></returns>
         Task<ServiceResult<byte[]>> ExportAsync(int id, ClaimsIdentity identity);
+       
+        /// <summary>
+        /// Exports a module to Excel. Only works for grid view modules.
+        /// </summary>
+        /// <param name="id">The ID of the module.</param>
+        /// <param name="identity">The identity of the authenticated user.</param>
+        /// <returns></returns>
+        Task<ServiceResult<byte[]>> ExportCsvAsync(int id, ClaimsIdentity identity);
 
         /// <summary>
         /// Gets a list of all currently used module groups.

@@ -54,7 +54,6 @@ const exportModuleSettings = {
             if (!this.exportHtml) {
                 return;
             }
-            
             // Add logged in user access token to default authorization headers for all jQuery ajax requests.
             $.ajaxSetup({
                 headers: { "Authorization": `Bearer ${localStorage.getItem("accessToken")}` }
@@ -147,11 +146,13 @@ const exportModuleSettings = {
                     const dropDownList = $("#DataSelectorList").data("kendoDropDownList");
                     const dataItem = dropDownList.dataItem();
                     const dataSelectorId = dataItem.encryptedId;
-                    const fileName = `${dataItem.name}.xlsx`;
+                    const dropDownFormat =  $("#FormatDataSelector").data("kendoDropDownList");
+                    const format = dropDownFormat.dataItem();
+                    const fileName = `${dataItem.name}.${format}`;
 
-                    const process = `exportToExcel_${Date.now()}`;
+                    const process = `exportTo${format}_${Date.now()}`;
                     window.processing.addProcess(process);
-                    const result = await fetch(`${this.settings.getItemsUrl}/excel?encryptedDataSelectorId=${encodeURIComponent(dataSelectorId)}&fileName=${encodeURIComponent(fileName)}`, {
+                    const result = await fetch(`${this.settings.getItemsUrl}/${format}?encryptedDataSelectorId=${encodeURIComponent(dataSelectorId)}&fileName=${encodeURIComponent(fileName)}`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -166,11 +167,13 @@ const exportModuleSettings = {
                     const dropDownList = $("#QueryList").data("kendoDropDownList");
                     const dataItem = dropDownList.dataItem();
                     const queryId = dataItem.encryptedId;
-                    const fileName = `${dataItem.description}.xlsx`;
+                    const dropDownFormat =  $("#FormatQueryList").data("kendoDropDownList");
+                    const format = dropDownFormat.dataItem();
+                    const fileName = `${dataItem.description}.${format}`;
 
-                    const process = `exportToExcel_${Date.now()}`;
+                    const process = `exportTo${format}_${Date.now()}`;
                     window.processing.addProcess(process);
-                    const result = await fetch(`${this.settings.getItemsUrl}/excel?queryid=${encodeURIComponent(queryId)}&fileName=${encodeURIComponent(fileName)}`, {
+                    const result = await fetch(`${this.settings.getItemsUrl}/${format}?queryid=${encodeURIComponent(queryId)}&fileName=${encodeURIComponent(fileName)}`, {
                         method: "POST",
                         headers: {
                             "Content-Type": "application/json",
@@ -184,13 +187,14 @@ const exportModuleSettings = {
                 case "module": {
                     const dropDownList = $("#ModuleList").data("kendoDropDownList");
                     const dataItem = dropDownList.dataItem();
-                    
                     const moduleId = dataItem.moduleId;
-                    const fileName = `${dataItem.name}.xlsx`;
+                    const dropDownFormat =  $("#FormatQueryList").data("kendoDropDownList");
+                    const format = dropDownFormat.dataItem();
+                    const fileName = `${dataItem.name}.${format}`;
                     
-                    const process = `exportToExcel_${Date.now()}`;
+                    const process = `exportTo${format}_${Date.now()}`;
                     window.processing.addProcess(process);
-                    const result = await fetch(`${this.settings.wiserApiRoot}modules/${moduleId}/export?fileName=${encodeURIComponent(fileName)}`, {
+                    const result = await fetch(`${this.settings.wiserApiRoot}modules/${moduleId}/export/${format}?fileName=${encodeURIComponent(fileName)}`, {
                         method: "GET",
                         headers: {
                             "Content-Type": "application/json",
@@ -254,6 +258,10 @@ const exportModuleSettings = {
                         dataValueField: "id",
                         dataSource: dataSelectors
                     });
+                    $(context).find("#FormatDataSelector").kendoDropDownList({
+                        dataSource: ["CSV" , "XLSX"],
+                        optionLabel: "Select a format"
+                    });
                 }
 
                 if (!queries || !queries.length) {
@@ -263,6 +271,10 @@ const exportModuleSettings = {
                         dataTextField: "description",
                         dataValueField: "id",
                         dataSource: queries
+                    });
+                    $(context).find("#FormatQueryList").kendoDropDownList({
+                        dataSource: ["CSV" , "XLSX"],
+                        optionLabel: "Select a format"
                     });
                 }
 
@@ -292,6 +304,10 @@ const exportModuleSettings = {
                             data: flatModulesList,
                             group: { field: "group" }
                         }
+                    });
+                    $(context).find("#FormatModuleList").kendoDropDownList({
+                        dataSource: ["CSV" , "XLSX"],
+                        optionLabel: "Select a format"
                     });
                 }
             } catch (exception) {

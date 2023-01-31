@@ -68,6 +68,13 @@ namespace Api.Modules.DataSelectors.Interfaces
         Task<ServiceResult<byte[]>> ToExcelAsync(WiserDataSelectorRequestModel data, ClaimsIdentity identity);
 
         /// <summary>
+        /// Get the result of the data selector based on the request as an CSV file.
+        /// </summary>
+        /// <param name="data">The request containing the information for the data selector.</param>
+        /// <param name="identity">The identity of the authenticated user.</param>
+        Task<ServiceResult<byte[]>> ToCsvAsync(WiserDataSelectorRequestModel data, ClaimsIdentity identity);
+        
+        /// <summary>
         /// Get the result of the data selector based on the request as a HTML page.
         /// </summary>
         /// <param name="data">The request containing the information for the data selector.</param>

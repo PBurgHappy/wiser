@@ -119,7 +119,7 @@ namespace Api.Modules.Modules.Controllers
         /// <param name="fileName">Optional: The name that the exported file should be.</param>
         /// <returns></returns>
         [HttpGet]
-        [Route("{id:int}/export")]
+        [Route("{id:int}/export/XlSX")]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [Produces("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")]
         public async Task<IActionResult> ExportAsync(int id, string fileName = null)
@@ -138,6 +138,34 @@ namespace Api.Modules.Modules.Controllers
             fileName = String.IsNullOrWhiteSpace(fileName) ? "Export.xlsx" : Path.ChangeExtension(fileName, ".xlsx");
             
             return File(exportResult.ModelObject, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+
+        /// <summary>
+        /// Exports the data of a Wiser module to Excel. This only works for grid view modules.
+        /// </summary>
+        /// <param name="id">The ID of the module to export.</param>
+        /// <param name="fileName">Optional: The name that the exported file should be.</param>
+        /// <returns></returns>
+        [HttpGet]
+        [Route("{id:int}/export/CSV")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [Produces("text/csv")]
+        public async Task<IActionResult> ExportCsvAsync(int id, string fileName = null)
+        {
+            var exportResult = await modulesService.ExportCsvAsync(id, (ClaimsIdentity)User.Identity);
+            if (exportResult == null)
+            {
+                return NotFound(id);
+            }
+
+            if (exportResult.StatusCode != HttpStatusCode.OK)
+            {
+                return exportResult.GetHttpResponseMessage();
+            }
+
+            fileName = String.IsNullOrWhiteSpace(fileName) ? "Export.csv" : Path.ChangeExtension(fileName, ".csv");
+            
+            return File(exportResult.ModelObject, "text/csv", fileName);
         }
 
         /// <summary>

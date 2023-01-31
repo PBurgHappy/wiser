@@ -35,6 +35,7 @@ namespace Api.Modules.DataSelectors.Services
         private readonly IHttpContextAccessor httpContextAccessor;
         private readonly GeeksCoreLibrary.Modules.DataSelector.Interfaces.IDataSelectorsService gclDataSelectorsService;
         private readonly IExcelService excelService;
+        private readonly ICsvService csvService;
         private readonly IDatabaseHelpersService databaseHelpersService;
         private readonly IWiserItemsService wiserItemsService;
 
@@ -43,7 +44,7 @@ namespace Api.Modules.DataSelectors.Services
         /// <summary>
         /// Creates a new instance of <see cref="DataSelectorsService"/>
         /// </summary>
-        public DataSelectorsService(IWiserCustomersService wiserCustomersService, IDatabaseConnection clientDatabaseConnection, IHttpContextAccessor httpContextAccessor, GeeksCoreLibrary.Modules.DataSelector.Interfaces.IDataSelectorsService gclDataSelectorsService, IExcelService excelService, IDatabaseHelpersService databaseHelpersService, IWiserItemsService wiserItemsService)
+        public DataSelectorsService(IWiserCustomersService wiserCustomersService, IDatabaseConnection clientDatabaseConnection, IHttpContextAccessor httpContextAccessor, GeeksCoreLibrary.Modules.DataSelector.Interfaces.IDataSelectorsService gclDataSelectorsService, IExcelService excelService, IDatabaseHelpersService databaseHelpersService, IWiserItemsService wiserItemsService, ICsvService csvService)
         {
             this.wiserCustomersService = wiserCustomersService;
             this.clientDatabaseConnection = clientDatabaseConnection;
@@ -52,6 +53,7 @@ namespace Api.Modules.DataSelectors.Services
             this.excelService = excelService;
             this.databaseHelpersService = databaseHelpersService;
             this.wiserItemsService = wiserItemsService;
+            this.csvService = csvService;
         }
 
         /// <inheritdoc />
@@ -451,6 +453,34 @@ VALUES(?roleId, ?id, 15)";
             return new ServiceResult<byte[]>(excelFile);
         }
 
+        /// <inheritdoc />
+        public async Task<ServiceResult<byte[]>> ToCsvAsync(WiserDataSelectorRequestModel data, ClaimsIdentity identity)
+        {
+            await clientDatabaseConnection.EnsureOpenConnectionForReadingAsync();
+            var httpContext = httpContextAccessor.HttpContext;
+            if (httpContext == null)
+            {
+                throw new Exception("HttpContext.Current is null, can't proceed.");
+            }
+
+            // Set the encryption key for the JCL internally. The JCL can't know which key to use otherwise.
+            var customer = (await wiserCustomersService.GetSingleAsync(identity)).ModelObject;
+            GclSettings.Current.ExpiringEncryptionKey = customer.EncryptionKey;
+
+            var (jsonResult, statusCode, error) = await GetJsonResponseAsync(data, identity);
+            if (statusCode != HttpStatusCode.OK)
+            {
+                return new ServiceResult<byte[]>
+                {
+                    StatusCode = statusCode,
+                    ErrorMessage = error
+                };
+            }
+            
+            var csvFile = csvService.JsonArrayToCsv(jsonResult);
+            return new ServiceResult<byte[]>(csvFile);
+        }
+        
         /// <inheritdoc />
         public async Task<ServiceResult<string>> ToHtmlAsync(WiserDataSelectorRequestModel data, ClaimsIdentity identity)
         {
