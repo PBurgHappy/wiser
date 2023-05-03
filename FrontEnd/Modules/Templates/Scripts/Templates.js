@@ -97,7 +97,9 @@ const moduleSettings = {
                 customerId: 0,
                 username: "Onbekend",
                 userEmailAddress: "",
-                userType: ""
+                userType: "",
+                templateId: 0,
+                initialTab: null
             };
             Object.assign(this.settings, settings);
 
@@ -196,6 +198,9 @@ const moduleSettings = {
             if (this.settings.templateId) {
                 await this.loadTemplate(this.settings.templateId);
                 this.selectedId = this.settings.templateId;
+                if (this.settings.initialTab) {
+                    this.mainTabStrip.select(`li.${this.settings.initialTab}-tab`);
+                }
             }
 
             window.processing.removeProcess(process);
@@ -1112,7 +1117,8 @@ const moduleSettings = {
         async initKendoDeploymentTab() {
             $("#deployLive, #deployAccept, #deployTest, #deployToBranchButton").kendoButton();
 
-            $("#saveButton, #saveAndDeployToTestButton").kendoButton({
+            $("#saveAndDeployToTestButton").kendoButton();
+            $("#saveButton").kendoButton({
                 icon: "save"
             });
 
@@ -2348,7 +2354,8 @@ const moduleSettings = {
             this.bindDeployButtons(templateId);
 
             // Bind save buttons.
-            $("#saveButton, #saveAndDeployToTestButton").kendoButton({
+            $("#saveAndDeployToTestButton").kendoButton();
+            $("#saveButton").kendoButton({
                 icon: "save"
             });
 
@@ -2507,13 +2514,13 @@ const moduleSettings = {
                             field: "start",
                             title: "Datum",
                             width: 150,
-                            template: "#= kendo.toString(kendo.parseDate(start), 'dd MMM yyyy HH:mm:ss') #",
+                            template: "#= kendo.toString(kendo.parseDate(start), 'dd MMM \\'yy') #",
                             filterable: {
                                 ui: "datepicker"
                             }
                         },
                         {
-                            field: "timeTaken",
+                            field: "timeTakenFormatted",
                             title: "Gemeten tijd",
                             width: 150,
                             filterable: false
